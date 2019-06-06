@@ -143,6 +143,8 @@ class Annotator:
             # Add label to the dataset by checking that the realpath is the same
             real_path = os.path.realpath(videos_list[vid])
             anno = [bf for bf in annotations if bf['video'] == real_path]
+            # print("realpath:",real_path)
+            # print("anno",annotations[0]['video'])
             if anno:
                 self.dataset[vid]['label'] = anno[0]['label']
                 skipped[annotations.index(anno[0])] = False
@@ -442,9 +444,14 @@ class Annotator:
         valid_labels = {bf['name'] for bf in self.labels}
         for anno in annotations:
             # If the annotation has a relative path, it is relative to the 
-            # annotation file's folder
+            # annotation file's folder -- not true anymore.
+            #the path in the annotations is relative to the muvilab repository.
             if not os.path.isabs(anno['video']):
-                anno['video'] = os.path.join(os.path.dirname(self.annotation_file), anno['video'])
+                #from annotations
+                clip_path = "/".join(anno['video'].split("\\"))
+                #the base path of muvilab directory = three backtracks i.e. xyz.mp4,annotations,muvilab
+                base_path = os.path.dirname(os.path.dirname(os.path.dirname(self.annotation_file)))
+                anno['video'] = os.path.join(base_path,clip_path)
             
             # Resolve path to allow future string comparison
             anno['video'] = os.path.realpath(anno['video'])
@@ -549,6 +556,9 @@ class Annotator:
                 self.current_page += 1
                 self.page_direction = +1
                 run_this_page = False
+            # elif self.current_page == self.N_pages-1:
+            #     run_this_page = False
+            #     run = False
                 
         # Previous page
         if chr(key_input) in {'b', 'B'}:
@@ -648,7 +658,6 @@ class Annotator:
             run_this_page = False
                 
         return run_this_page, run
-
 
     def main(self):
         # Find video files in the video folder
@@ -757,7 +766,10 @@ class Annotator:
                     key_input = cv2.waitKey(wait)
                     if key_input == -1:
                         continue
+
+                    print("processing input:",key_input)
                     run_this_page, run = self.process_keyboard_input(key_input, run)
+                    print(run_this_page,run)
                     if not run_this_page:
                         break
             
